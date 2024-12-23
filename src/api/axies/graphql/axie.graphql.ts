@@ -1,9 +1,11 @@
 import axios from "axios";
-import type { AxieTypeDef, IAxie } from "@/api/axies/types";
+import { InternalServerError } from "@/errors";
+
+import type { AxieTypeDef, IAxie, IAxieGroup } from "@/api/axies/types";
 
 const axieGraphQLEndpoint: string = "https://graphql-gateway.axieinfinity.com/graphql";
 
-export async function getLatestAxies(): Promise<IAxie[]> {
+export async function getLatestAxies(): Promise<IAxieGroup> {
   try {
     const graphqlQuery = {
       operationName: "GetAxieLatest",
@@ -23,8 +25,11 @@ export async function getLatestAxies(): Promise<IAxie[]> {
       },
     });
 
+    if (!response || !response.data || !response.data.data)
+      throw new InternalServerError("Unable to retrieve Axies from Axie GraphQL");
     const responseData = response?.data?.data;
-    const axies = responseData?.axies?.results?.map((axie: AxieTypeDef) => {
+
+    const axies = responseData.axies.results.map((axie: AxieTypeDef) => {
       return {
         id: axie.id,
         name: axie.name,
@@ -34,8 +39,19 @@ export async function getLatestAxies(): Promise<IAxie[]> {
       };
     });
 
-    return axies;
+    return groupAxieData(axies);
   } catch (error) {
-    throw new Error(`${(error as Error).message}`);
+    throw new InternalServerError((error as Error).message);
   }
+}
+
+function groupAxieData(axieData: IAxie[]): IAxieGroup {
+  const groupedAxieData: IAxieGroup = axieData.reduce((accumulator: any, value: IAxie): IAxieGroup => {
+    const classification: string = value.class;
+    if (!accumulator[classification]) accumulator[classification] = [];
+    accumulator[classification].push(value);
+    return accumulator;
+  }, {});
+
+  return groupedAxieData;
 }

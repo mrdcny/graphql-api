@@ -1,60 +1,30 @@
-import { generateAccessToken } from "@/common/utils/auth";
-import { hash, validateHash } from "@/common/utils/encrypt";
+import { bcrypt, auth } from "@/utils/index";
+import { userRepository } from "@/api/users/user.repository";
 
-import { StatusCodes } from "http-status-codes";
-import { GraphQLError } from "graphql";
-
-import User from "@/api/users/user.model";
 import type { IUser, UserResponse } from "@/api/users/types";
-import { isValidEmail, isValidPassword } from "@/common/utils/validator";
+import { InternalServerError, NotFoundError, UnauthorizedError } from "@/errors";
 
 class UserService {
   async login(email: string, password: string): Promise<UserResponse> {
-    try {
-      if (!isValidEmail(email) || !isValidPassword(password))
-        throw new GraphQLError("input data is invalid. please make sure email and password have valid format", {
-          extensions: { code: StatusCodes.BAD_REQUEST },
-        });
+    const existingUser: IUser | null = await userRepository.findByEmail(email);
+    if (!existingUser) throw new NotFoundError(`User: ${email} not found`);
 
-      const existingUser: IUser | null = await User.findOne({ email });
+    const isPasswordMatching = await bcrypt.validateHash(password, existingUser.password);
+    if (!isPasswordMatching) throw new UnauthorizedError("Invalid email or password.");
 
-      if (!existingUser) throw new GraphQLError("User not found", { extensions: { code: StatusCodes.NOT_FOUND } });
-      const isPasswordMatching = await validateHash(password, existingUser.password);
-
-      if (!isPasswordMatching)
-        throw new GraphQLError("Invalid credentials. Please try again.", {
-          extensions: { code: StatusCodes.UNAUTHORIZED },
-        });
-
-      const accessToken: string = generateAccessToken(email);
-      return { email, accessToken };
-    } catch (error) {
-      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
-      throw new GraphQLError((error as Error).message, { extensions: { code: errorCode } });
-    }
+    const accessToken: string = auth.generateAccessToken(email);
+    return { email, accessToken };
   }
 
   async register(email: string, password: string): Promise<UserResponse> {
-    try {
-      if (!isValidEmail(email) || !isValidPassword(password))
-        throw new GraphQLError("input data is invalid. please make sure email and password have valid format", {
-          extensions: { code: StatusCodes.BAD_REQUEST },
-        });
+    const userExists: IUser | null = await userRepository.findByEmail(email);
+    if (userExists) throw new InternalServerError(`User: ${email} already used. Please choose a different email.`);
 
-      const userExists: IUser | null = await User.findOne({ email });
+    const encryptedPassword: string = await bcrypt.hash(password);
+    const newUser: IUser = await userRepository.save({ email, password: encryptedPassword });
+    const accessToken: string = auth.generateAccessToken(newUser.email);
 
-      if (userExists) throw new GraphQLError(`Email ${email} already used. Please try again.`);
-
-      const encryptedPassword: string = await hash(password);
-      const newUser: IUser = await User.create({ email, password: encryptedPassword });
-
-      const accessToken: string = generateAccessToken(newUser.email);
-
-      return { email, accessToken };
-    } catch (error) {
-      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
-      throw new GraphQLError((error as Error).message, { extensions: { code: errorCode } });
-    }
+    return { email, accessToken };
   }
 }
 

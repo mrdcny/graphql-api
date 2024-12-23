@@ -1,17 +1,7 @@
-import { env } from "@/common/utils/config";
+import { env } from "@/config/environment";
 import { app, logger } from "@/server";
-import mongoose from "mongoose";
 
-mongoose.connect(env.DB_URL);
-const dbConnection = mongoose.connection;
-
-dbConnection.once("connected", () => {
-  logger.info("MongoDB Connection established.");
-});
-
-dbConnection.on("error", (err: Error) => {
-  logger.error(`Mongoose connection error: ${err}`);
-});
+import db from "@/db";
 
 const server = app.listen(env.PORT, () => {
   const { NODE_ENV, PORT } = env;
@@ -22,6 +12,7 @@ const onCloseSignal = () => {
   logger.info("sigint received, shutting down");
   server.close(() => {
     logger.info("server closed");
+    db.close();
     process.exit();
   });
   setTimeout(() => process.exit(1), 10000).unref();

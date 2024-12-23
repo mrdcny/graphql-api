@@ -1,43 +1,31 @@
-import mongoose from "mongoose";
 import Web3 from "web3";
 
-import { CONTRACT_ADDRESS, ABI } from "@/abis/axie.abi";
-import { env } from "@/common/utils/config";
+import { axieRepository } from "@/api/axies/axie.repository";
+import { CONTRACT_ADDRESS, ABI } from "@/api/axies/abis/axie.abi";
+import { env } from "@/config/environment";
 import { getLatestAxies } from "@/api/axies/graphql/axie.graphql";
-import { GraphQLError } from "graphql";
-import { StatusCodes } from "http-status-codes";
-
-import { Beast, Aqua, Plant, Bird, Bug, Reptile, Mech, Dawn, Dusk } from "@/api/axies/axie.model";
+import { InternalServerError } from "@/errors";
 
 import type { IAxie, IAxieGroup } from "@/api/axies/types";
 
 class AxieService {
   async getLatestAxies(): Promise<IAxie[]> {
     try {
-      const axieData: IAxie[] = await populateAxieList();
+      const axieData: IAxie[] = await axieRepository.getAllAxiesFromCollections();
       const sortedAxiesByPrice: IAxie[] = axieData.sort((a, b) => (a.currentPriceUsd > b.currentPriceUsd ? 1 : -1));
       return sortedAxiesByPrice;
     } catch (error) {
-      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
-      throw new GraphQLError("Unable to retrieve axie data.", { extensions: { code: errorCode } });
+      throw new InternalServerError("Unable to retrieve Axies from the database", (error as Error).message);
     }
   }
 
   async saveLatestAxies(): Promise<void> {
     try {
-      const axieData: IAxie[] = await getLatestAxies();
-
-      const groupedAxieData: IAxieGroup = axieData.reduce((accumulator: any, value: IAxie): IAxieGroup => {
-        const classification: string = value.class;
-        if (!accumulator[classification]) accumulator[classification] = [];
-        accumulator[classification].push(value);
-        return accumulator;
-      }, {});
-
-      await syncAxieData(groupedAxieData);
+      const axieData: IAxieGroup = await getLatestAxies();
+      await axieRepository.syncAxieData(axieData);
     } catch (error) {
-      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
-      throw new GraphQLError((error as GraphQLError).message, { extensions: { code: errorCode } });
+      console.log("(error as Error).stack", (error as Error).stack);
+      throw new InternalServerError("Unable to sync axie data", (error as Error).message);
     }
   }
 
@@ -49,65 +37,9 @@ class AxieService {
       const totalSupply: number = await contract.methods.totalSupply().call();
       return Number(totalSupply);
     } catch (error) {
-      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
-      throw new GraphQLError((error as GraphQLError).message, {
-        extensions: { code: errorCode },
-      });
+      throw new InternalServerError("Error getting data from Smart Contract.", (error as Error).message);
     }
   }
-}
-
-async function syncAxieData(axieData: IAxieGroup): Promise<void> {
-  /** Added Session since there are transactions to multiple collections */
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    /** Delete all data from collections */
-    await Beast.deleteMany().session(session);
-    await Aqua.deleteMany().session(session);
-    await Plant.deleteMany().session(session);
-    await Bird.deleteMany().session(session);
-    await Bug.deleteMany().session(session);
-    await Reptile.deleteMany().session(session);
-    await Mech.deleteMany().session(session);
-    await Dawn.deleteMany().session(session);
-    await Dusk.deleteMany().session(session);
-
-    /** save all data to collections */
-
-    await Beast.create(axieData.Beast || [], { session });
-    await Aqua.create(axieData.Aquatic || [], { session });
-    await Plant.create(axieData.Plant || [], { session });
-    await Bird.create(axieData.Bird || [], { session });
-    await Bug.create(axieData.Bug || [], { session });
-    await Reptile.create(axieData.Reptile || [], { session });
-    await Mech.create(axieData.Mech || [], { session });
-    await Dawn.create(axieData.Dawn || [], { session });
-    await Dusk.create(axieData.Dusk || [], { session });
-
-    await session.commitTransaction();
-    session.endSession();
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw new GraphQLError("Unable to sync Axie data with Axie GraphQL API", {
-      extensions: { code: StatusCodes.INTERNAL_SERVER_ERROR },
-    });
-  }
-}
-
-async function populateAxieList(): Promise<IAxie[]> {
-  const axiesArr = [];
-  axiesArr.push(await Beast.find());
-  axiesArr.push(await Aqua.find());
-  axiesArr.push(await Plant.find());
-  axiesArr.push(await Bird.find());
-  axiesArr.push(await Bug.find());
-  axiesArr.push(await Reptile.find());
-  axiesArr.push(await Mech.find());
-  axiesArr.push(await Dawn.find());
-  axiesArr.push(await Dusk.find());
-  return axiesArr.flat();
 }
 
 export const axieService = new AxieService();
