@@ -14,7 +14,7 @@ dbConnection.on("error", (err: Error) => {
 });
 
 const server = app.listen(env.PORT, () => {
-  const { NODE_ENV, HOST, PORT } = env;
+  const { NODE_ENV, PORT } = env;
   logger.info(`Server (${NODE_ENV}) running on port: ${PORT} `);
 });
 

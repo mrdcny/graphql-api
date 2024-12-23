@@ -10,6 +10,6 @@ RUN npm ci
 RUN npm run build
 
 #Expose Port for Deployment
-EXPOSE 4000
+EXPOSE 3000
 # Run start command
 CMD [ "npm", "run", "start" ]
