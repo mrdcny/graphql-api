@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import Web3 from "web3";
 
-import { AxieClass } from "@/api/axies/enums/AxieClass";
 import { CONTRACT_ADDRESS, ABI } from "@/abis/axie.abi";
 import { env } from "@/common/utils/config";
 import { getLatestAxies } from "@/api/axies/graphql/axie.graphql";
@@ -16,12 +15,11 @@ class AxieService {
   async getLatestAxies(): Promise<IAxie[]> {
     try {
       const axieData: IAxie[] = await populateAxieList();
-      const sortedAxiesByPrice: IAxie[] = axieData.sort((a, b) => (a.currentPriceUsd < b.currentPriceUsd ? 1 : -1));
+      const sortedAxiesByPrice: IAxie[] = axieData.sort((a, b) => (a.currentPriceUsd > b.currentPriceUsd ? 1 : -1));
       return sortedAxiesByPrice;
     } catch (error) {
-      throw new GraphQLError("Unable to retrieve Axies.", {
-        extensions: { code: StatusCodes.INTERNAL_SERVER_ERROR },
-      });
+      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
+      throw new GraphQLError("Unable to retrieve axie data.", { extensions: { code: errorCode } });
     }
   }
 
@@ -29,7 +27,7 @@ class AxieService {
     try {
       const axieData: IAxie[] = await getLatestAxies();
 
-      const groupedAxieData: IAxieGroup = axieData.reduce((accumulator: any, value: any): any => {
+      const groupedAxieData: IAxieGroup = axieData.reduce((accumulator: any, value: IAxie): IAxieGroup => {
         const classification: string = value.class;
         if (!accumulator[classification]) accumulator[classification] = [];
         accumulator[classification].push(value);
@@ -38,25 +36,28 @@ class AxieService {
 
       await syncAxieData(groupedAxieData);
     } catch (error) {
-      console.log(error);
-      throw new GraphQLError("Unable to sync Axie data with Axie GraphQL API", {
-        extensions: { code: StatusCodes.INTERNAL_SERVER_ERROR },
-      });
+      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
+      throw new GraphQLError((error as GraphQLError).message, { extensions: { code: errorCode } });
     }
   }
 
   async getAxieTotalSupply(): Promise<number> {
-    const web3 = new Web3(new Web3.providers.HttpProvider(env.INFURA_ENDPOINT));
-    const contract = new web3.eth.Contract(ABI, CONTRACT_ADDRESS);
+    try {
+      const web3 = new Web3(new Web3.providers.HttpProvider(env.INFURA_ENDPOINT));
+      const contract = new web3.eth.Contract(ABI, CONTRACT_ADDRESS);
 
-    const totalSupply: number = await contract.methods.totalSupply().call();
-    return totalSupply;
+      const totalSupply: number = await contract.methods.totalSupply().call();
+      return Number(totalSupply);
+    } catch (error) {
+      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
+      throw new GraphQLError((error as GraphQLError).message, {
+        extensions: { code: errorCode },
+      });
+    }
   }
 }
 
-async function syncAxieData(axieData: IAxieGroup) {
-  /** TODO: Optimize FILTER usage */
-
+async function syncAxieData(axieData: IAxieGroup): Promise<void> {
   /** Added Session since there are transactions to multiple collections */
   const session = await mongoose.startSession();
   session.startTransaction();

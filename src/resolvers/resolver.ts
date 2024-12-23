@@ -4,6 +4,7 @@ import { authService } from "@/api/auth/auth.service";
 import { axieService } from "@/api/axies/axie.service";
 
 import type { UserResponse } from "@/api/users/types";
+import type { IAxie, ITotalSupply } from "@/api/axies/types";
 
 const resolvers = {
   async login(payload: IUser): Promise<UserResponse> {
@@ -16,25 +17,21 @@ const resolvers = {
     return await userService.register(email, password);
   },
 
-  async getLatestAxies(args: any, context: any) {
-    /**
-     * TODO:
-     * 1. (OPTIONAL) Find a way to add criteria where you can retrieve specific classes
-     */
+  async getLatestAxies(args: any, context: any): Promise<IAxie[]> {
     authService.authenticate(context.token);
     return axieService.getLatestAxies();
   },
 
-  async saveLatestAxies(args: any, context: any) {
+  async saveLatestAxies(args: any, context: any): Promise<string> {
     authService.authenticate(context.token);
     await axieService.saveLatestAxies();
     return "Axie data has been successfully synced!";
   },
 
-  async getAxieTotalSupply(args: any, context: any) {
+  async getAxieTotalSupply(args: any, context: any): Promise<ITotalSupply> {
     authService.authenticate(context.token);
-    const totalSupply = await axieService.getAxieTotalSupply();
-    return `Axie total supply: ${totalSupply}`;
+    const totalSupply: number = await axieService.getAxieTotalSupply();
+    return { totalSupply };
   },
 };
 

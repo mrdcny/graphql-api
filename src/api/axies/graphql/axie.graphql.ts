@@ -1,28 +1,30 @@
-import { request } from "graphql-request";
-import type { IAxie } from "@/api/axies/axie.model";
+import axios from "axios";
+import type { AxieTypeDef, IAxie } from "@/api/axies/types";
 
-interface AxieTypeDef {
-  id: number;
-  name: string;
-  stage: string;
-  class: string;
-  order: { currentPriceUsd: number };
-}
+const axieGraphQLEndpoint: string = "https://graphql-gateway.axieinfinity.com/graphql";
 
 export async function getLatestAxies(): Promise<IAxie[]> {
   try {
-    const query =
-      "query GetAxieLatest( $auctionType: AuctionType $criteria: AxieSearchCriteria $from: Int $sort: SortBy $size: Int $owner: String) { axies( auctionType: $auctionType criteria: $criteria from: $from sort: $sort size: $size owner: $owner ) { results { id name stage class order { currentPriceUsd } } }}";
-    const variables = {
-      auctionType: "Sale",
-      from: 0,
-      size: 300,
-      sort: "PriceAsc",
-      criteria: {},
+    const graphqlQuery = {
+      operationName: "GetAxieLatest",
+      query:
+        "query GetAxieLatest( $auctionType: AuctionType $criteria: AxieSearchCriteria $from: Int $sort: SortBy $size: Int $owner: String) { axies( auctionType: $auctionType criteria: $criteria from: $from sort: $sort size: $size owner: $owner ) { results { id name stage class order { currentPriceUsd } } }}",
+      variables: {
+        auctionType: "Sale",
+        from: 0,
+        size: 300,
+        sort: "PriceAsc",
+        criteria: {},
+      },
     };
-    const response: any = await request("https://graphql-gateway.axieinfinity.com/graphql", query, variables);
+    const response = await axios.post(axieGraphQLEndpoint, graphqlQuery, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    const axies = response?.axies?.results.map((axie: AxieTypeDef) => {
+    const responseData = response?.data?.data;
+    const axies = responseData?.axies?.results?.map((axie: AxieTypeDef) => {
       return {
         id: axie.id,
         name: axie.name,
@@ -31,6 +33,8 @@ export async function getLatestAxies(): Promise<IAxie[]> {
         currentPriceUsd: axie.order.currentPriceUsd,
       };
     });
+
+    console.log(axies);
 
     return axies;
   } catch (error) {

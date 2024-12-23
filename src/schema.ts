@@ -17,10 +17,14 @@ const schema = buildSchema(`
       class: String!
       currentPriceUsd: Float!
     }
-    
+
+    type AxieSupply {
+      totalSupply: Int!
+    }
+
     type Query {
        getLatestAxies: [Axie]
-       getAxieTotalSupply: String!
+       getAxieTotalSupply: AxieSupply!
     }
 
     type Mutation {

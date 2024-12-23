@@ -20,27 +20,29 @@ class UserService {
           extensions: { code: StatusCodes.UNAUTHORIZED },
         });
 
-      const accessToken = generateAccessToken({ email });
+      const accessToken: string = generateAccessToken(email);
       return { email, accessToken };
     } catch (error) {
-      throw new GraphQLError((error as Error).message, { extensions: { code: StatusCodes.INTERNAL_SERVER_ERROR } });
+      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
+      throw new GraphQLError((error as Error).message, { extensions: { code: errorCode } });
     }
   }
 
   async register(email: string, password: string): Promise<UserResponse> {
     try {
       const userExists: IUser | null = await User.findOne({ email });
-      if (userExists)
-        throw new GraphQLError(`Email ${email} already used. Please try again.`, {
-          extensions: { code: StatusCodes.NOT_FOUND },
-        });
-      const encryptedPassword = await hash(password);
+
+      if (userExists) throw new GraphQLError(`Email ${email} already used. Please try again.`);
+
+      const encryptedPassword: string = await hash(password);
       const newUser: IUser = await User.create({ email, password: encryptedPassword });
 
-      const accessToken = generateAccessToken({ email: newUser.email });
+      const accessToken: string = generateAccessToken(newUser.email);
+
       return { email, accessToken };
     } catch (error) {
-      throw new GraphQLError((error as Error).message, { extensions: { code: StatusCodes.UNAUTHORIZED } });
+      const errorCode = (error as GraphQLError)?.extensions?.code || StatusCodes.INTERNAL_SERVER_ERROR;
+      throw new GraphQLError((error as Error).message, { extensions: { code: errorCode } });
     }
   }
 }

@@ -1,7 +1,11 @@
 import { StatusCodes } from "http-status-codes";
 import { GraphQLError } from "graphql";
 
+import { userService } from "@/api/users/user.service";
+
 import { parseAuthToken, verifyAuth } from "@/common/utils/auth";
+
+import type { JwtPayload } from "jsonwebtoken";
 
 class AuthService {
   authenticate(token: string) {
@@ -13,9 +17,6 @@ class AuthService {
         });
       }
       verifyAuth(accessToken);
-      /**
-       * TODO: Possible to add user validation here
-       */
     } catch (error) {
       throw new GraphQLError("Unauthorized access to API. Please supply a valid token", {
         extensions: { code: StatusCodes.UNAUTHORIZED },

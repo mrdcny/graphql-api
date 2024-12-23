@@ -6,7 +6,7 @@ mongoose.connect(env.DB_URL);
 const dbConnection = mongoose.connection;
 
 dbConnection.once("connected", () => {
-  logger.info(`Mongoose connection established to ${env.DB_URL}`); //TODO: Update logger to exclude actual DB URL
+  logger.info("MongoDB Connection established.");
 });
 
 dbConnection.on("error", (err: Error) => {
@@ -15,7 +15,7 @@ dbConnection.on("error", (err: Error) => {
 
 const server = app.listen(env.PORT, () => {
   const { NODE_ENV, HOST, PORT } = env;
-  logger.info(`Server (${NODE_ENV}) running on port http://${HOST}:${PORT}`);
+  logger.info(`Server (${NODE_ENV}) running on port: ${PORT} `);
 });
 
 const onCloseSignal = () => {
@@ -24,7 +24,7 @@ const onCloseSignal = () => {
     logger.info("server closed");
     process.exit();
   });
-  setTimeout(() => process.exit(1), 10000).unref(); // Force shutdown after 10s
+  setTimeout(() => process.exit(1), 10000).unref();
 };
 
 process.on("SIGINT", onCloseSignal);

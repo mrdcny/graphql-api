@@ -8,7 +8,7 @@ export const env = cleanEnv(process.env, {
   PORT: port({ devDefault: testOnly(8080) }),
   HOST: host({ devDefault: testOnly("localhost") }),
   CORS_ORIGIN: str({ devDefault: testOnly("http://localhost:8080") }),
-  DB_URL: str({}),
-  JWT_SECRET_KEY: str({}),
-  INFURA_ENDPOINT: str({}),
+  DB_URL: str(),
+  JWT_SECRET_KEY: str(),
+  INFURA_ENDPOINT: str(),
 });

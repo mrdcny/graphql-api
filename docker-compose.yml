@@ -1,0 +1,9 @@
+services:
+  graphql-api:
+    container_name: graphql-api
+    restart: always
+    build: .
+    environment:
+      - PORT=4000
+    ports:
+      - "4000:4000"

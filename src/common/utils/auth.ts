@@ -1,8 +1,8 @@
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { env } from "@/common/utils/config";
 
-export function generateAccessToken(payload: object): string {
-  return jwt.sign(payload, env.JWT_SECRET_KEY, { expiresIn: "1h" });
+export function generateAccessToken(user: string): string {
+  return jwt.sign({ sub: user }, env.JWT_SECRET_KEY, { expiresIn: "1h" });
 }
 
 export function verifyAuth(token: string): JwtPayload | string {
