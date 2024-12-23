@@ -34,8 +34,6 @@ export async function getLatestAxies(): Promise<IAxie[]> {
       };
     });
 
-    console.log(axies);
-
     return axies;
   } catch (error) {
     throw new Error(`${(error as Error).message}`);

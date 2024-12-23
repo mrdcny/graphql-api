@@ -88,7 +88,6 @@ async function syncAxieData(axieData: IAxieGroup): Promise<void> {
     await session.commitTransaction();
     session.endSession();
   } catch (error) {
-    console.log(error);
     await session.abortTransaction();
     session.endSession();
     throw new GraphQLError("Unable to sync Axie data with Axie GraphQL API", {

@@ -45,5 +45,5 @@ JWT_SECRET_KEY="<JWT_SECRET_KEY | UUID>"
 INFURA_ENDPOINT="<INFURA RPC URL>"
 ```
 ## Try it out
-Try the live API by accessing this [graphQL playground]()
+Try the live API by accessing this [graphQL playground](http://ec2-13-250-97-164.ap-southeast-1.compute.amazonaws.com:3000/playground) or http://localhost:3000/playground for local setup
 

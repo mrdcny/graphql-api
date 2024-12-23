@@ -6,17 +6,23 @@ import { GraphQLError } from "graphql";
 
 import User from "@/api/users/user.model";
 import type { IUser, UserResponse } from "@/api/users/types";
+import { isValidEmail, isValidPassword } from "@/common/utils/validator";
 
 class UserService {
   async login(email: string, password: string): Promise<UserResponse> {
     try {
+      if (!isValidEmail(email) || !isValidPassword(password))
+        throw new GraphQLError("input data is invalid. please make sure email and password have valid format", {
+          extensions: { code: StatusCodes.BAD_REQUEST },
+        });
+
       const existingUser: IUser | null = await User.findOne({ email });
 
       if (!existingUser) throw new GraphQLError("User not found", { extensions: { code: StatusCodes.NOT_FOUND } });
       const isPasswordMatching = await validateHash(password, existingUser.password);
 
       if (!isPasswordMatching)
-        throw new GraphQLError("Invalid Password. Please try again.", {
+        throw new GraphQLError("Invalid credentials. Please try again.", {
           extensions: { code: StatusCodes.UNAUTHORIZED },
         });
 
@@ -30,6 +36,11 @@ class UserService {
 
   async register(email: string, password: string): Promise<UserResponse> {
     try {
+      if (!isValidEmail(email) || !isValidPassword(password))
+        throw new GraphQLError("input data is invalid. please make sure email and password have valid format", {
+          extensions: { code: StatusCodes.BAD_REQUEST },
+        });
+
       const userExists: IUser | null = await User.findOne({ email });
 
       if (userExists) throw new GraphQLError(`Email ${email} already used. Please try again.`);
