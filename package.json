@@ -1,0 +1,55 @@
+{
+  "name": "graphql-api",
+  "version": "1.0.0",
+  "description": "A GraphQL API that interacts with Axie Infinity GraphQL, Smart Contracts, and MongoDB",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "clean": "rimraf dist coverage",
+    "lint": "biome check src/",
+    "lint:fix": "biome check src/ --fix",
+    "format": "biome format src/"
+  },
+  "author": "Marjay Dacanay",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "envalid": "^8.0.0",
+    "express": "^4.21.2",
+    "graphql": "^16.10.0",
+    "graphql-http": "^1.22.3",
+    "graphql-request": "^7.1.2",
+    "http-status-codes": "^2.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.2",
+    "pino-http": "^10.3.0",
+    "web3": "^4.16.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "lint-staged": "^15.2.11",
+    "pino-pretty": "^13.0.0",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite-tsconfig-paths": "^5.1.4"
+  },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,json,jsonc}": ["biome check --apply --no-errors-on-unmatched"]
+  },
+  "tsup": {
+    "entry": ["src", "!src/**/__tests__/**", "!src/**/*.test.*"],
+    "splitting": false,
+    "sourcemap": true,
+    "clean": true
+  }
+}
