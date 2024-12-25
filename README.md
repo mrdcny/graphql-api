@@ -34,7 +34,9 @@ docker-compose up -d
 ```
 
 ## Environment Variables
-Refere to [env.example](https://github.com/mrdcny/graphql-api/blob/main/.env.example) file included in the source code
+Refer to [env.example](https://github.com/mrdcny/graphql-api/blob/main/.env.example) file included in the source code
+- DB_URL (MongoDB URL) configured thru: https://www.mongodb.com/ and creating a cluster.
+- INFURA_ENDPOINT (RPC NODE) can be setup and configured thru: https://www.infura.io/ then get the active endpoint for Ethereum Mainnet
 ```
 NODE_ENV="<DEPLOYMENT ENVIRONMENT> | development | test | production"
 PORT="<SERVER PORT>"
