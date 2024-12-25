@@ -1,39 +1,32 @@
 import cors from "cors";
-import express, { type Express } from "express";
+import express from "express";
+import expressPlayground from "graphql-playground-middleware-express";
+import resolvers from "@/graphql/resolvers";
+import schema from "@/graphql/schema/schema";
+
+import { env } from "@/config/environment";
 import { pino } from "pino";
-import { env } from "@/common/utils/config";
-import schema from "@/schema";
-import resolvers from "@/resolvers/resolver";
+import { createHandler } from "graphql-http/lib/use/express";
+
+import type { Express, Request, Response } from "express";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
-
-import { createHandler } from "graphql-http/lib/use/express";
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: env.CORS_ORIGIN }));
 
+app.get("/playground", expressPlayground({ endpoint: "/graphql" }));
 app.use(
   "/graphql",
   createHandler({
     schema,
     rootValue: resolvers,
-    context: (req: any, res: any): any => ({
+    context: (req: Request, res: Response): any => ({
       token: req.headers.authorization || "",
     }),
   }),
 );
 
 export { app, logger };
-
-/**
- * TODO:
- * 1. Add Authentication on GraphQL Queries & Mutation == > DONE
- * 2. Axie Smart Contract Interaction ==> DONE
- * 3. Add user validation on authentication
- * 4. Interfaces and types for data handling
- * 5. Initialize GIT
- * 6. README
- *
- */
