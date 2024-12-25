@@ -5,7 +5,7 @@ import { env } from "@/config/environment";
 import { pino } from "pino";
 import { graphqlRouter } from "@/graphql/route";
 
-import type { Express, Request, Response } from "express";
+import type { Express } from "express";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();

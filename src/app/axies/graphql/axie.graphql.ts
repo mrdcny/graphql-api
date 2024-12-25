@@ -21,7 +21,9 @@ export async function getLatestAxies(): Promise<IAxieGroup> {
         from: 0,
         size: 300,
         sort: "PriceAsc",
-        criteria: {},
+        criteria: {
+          stages: 4, // added criteria 4 to only return adult axies. exlcuding this will also return stage 0 axies (eggs) which does not have classes.
+        },
       },
     };
     const response = await axios.post(axieGraphQLEndpoint, graphqlQuery, {
