@@ -1,4 +1,4 @@
-import { BadDataError } from "@/errors";
+import { BadDataError, errorMessages } from "@/errors";
 
 export function isValidEmail(email: string): boolean {
   const emailRegex: RegExp = /^\w+([\.+-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/;
@@ -11,5 +11,5 @@ export function isValidPassword(password: string): boolean {
 
 export function validateInput(email: string, password: string) {
   if (!isValidEmail(email) || !isValidPassword(password))
-    throw new BadDataError("Email & Password input cannot be empty.");
+    throw new BadDataError(errorMessages.INVALID_USER_INPUT);
 }

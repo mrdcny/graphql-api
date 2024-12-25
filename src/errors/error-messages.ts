@@ -7,4 +7,6 @@ export const errorMessages = {
   INVALID_CREDENTIALS: "Invalid credentials provided.",
   USER_ALREADY_EXIST:
     "Email address is already used. Please choose a different email ",
+  INVALID_USER_INPUT:
+    "Invalid Input. Ensure email has correct format and password is not empty!",
 };
