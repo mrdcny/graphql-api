@@ -1,5 +1,5 @@
 import { axieService } from "@/app/axies/axie.service";
-import { auth } from "@/utils";
+import { auth, messagesConst } from "@/utils";
 
 import type { IAxie, ITotalSupply } from "@/app/axies/interfaces/types";
 
@@ -16,7 +16,7 @@ const axieResolver = {
   async saveLatestAxies(args: any, context: any): Promise<string> {
     auth.validateAuthentication(context.token);
     await axieService.saveLatestAxies();
-    return "Axie data has been successfully synced!";
+    return messagesConst.SYNC_SUCCESS;
   },
 };
 
